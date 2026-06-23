@@ -9,6 +9,7 @@ use crate::{config::ConfigHandle, Servers};
 
 mod buffer_clear;
 mod devices;
+mod join;
 mod keys;
 mod matrix;
 mod me;
@@ -17,6 +18,7 @@ mod verification;
 
 use buffer_clear::BufferClearCommand;
 use devices::DevicesCommand;
+use join::JoinCommand;
 use keys::KeysCommand;
 use matrix::MatrixCommand;
 use me::MeCommand;
@@ -29,6 +31,7 @@ pub struct Commands {
     _page_up: CommandRun,
     _verification: Command,
     _buffer_clear: CommandRun,
+    _join: CommandRun,
     _me: CommandRun,
 }
 
@@ -44,6 +47,7 @@ impl Commands {
             _page_up: PageUpCommand::create(servers)?,
             _verification: VerificationCommand::create(servers)?,
             _buffer_clear: BufferClearCommand::create(servers)?,
+            _join: JoinCommand::create(servers)?,
             _me: MeCommand::create(servers)?,
         })
     }

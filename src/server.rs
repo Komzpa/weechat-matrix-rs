@@ -77,7 +77,7 @@ use matrix_sdk::{
             AnySyncTimelineEvent, AnyToDeviceEvent, SyncStateEvent,
         },
         DeviceId, DeviceKeyAlgorithm, MilliSecondsSinceUnixEpoch,
-        OwnedDeviceId, OwnedRoomId, OwnedUserId, RoomId, UserId,
+        OwnedDeviceId, OwnedRoomId, OwnedRoomOrAliasId, OwnedUserId, RoomId, UserId,
     },
     Client, Error,
 };
@@ -209,6 +209,44 @@ impl MatrixServer {
 
     pub fn clone_weak(&self) -> Weak<InnerServer> {
         Rc::downgrade(&self.inner)
+    }
+
+    /// Join a Matrix room by ID or alias.
+    pub async fn join_room(&self, room_id_or_alias: String) {
+        let Ok(room_id_or_alias) =
+            room_id_or_alias.parse::<OwnedRoomOrAliasId>()
+        else {
+            self.print_error("Invalid room ID or alias.");
+            return;
+        };
+
+        let Some(connection) = self.connection() else {
+            self.print_error("Not connected. Please connect first.");
+            return;
+        };
+
+        self.print_network(&format!("Joining room {}...", room_id_or_alias));
+
+        let client = connection.client().clone();
+        let result = connection
+            .spawn(async move {
+                client
+                    .join_room_by_id_or_alias(&room_id_or_alias, &[])
+                    .await
+            })
+            .await;
+
+        match result {
+            Ok(room) => {
+                self.print_network(&format!(
+                    "Successfully joined room {}",
+                    room.room_id()
+                ));
+            }
+            Err(error) => {
+                self.print_error(&format!("Failed to join room: {:?}", error));
+            }
+        }
     }
 
     pub fn connect(&self) -> Result<(), ServerError> {
